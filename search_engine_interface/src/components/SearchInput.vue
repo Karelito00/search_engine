@@ -33,12 +33,17 @@ export default {
 
 <style lang="scss" scoped>
 .search {
+  box-shadow: 1px 1px 2px 0px #3535351c;
   display: flex;
   align-items: center;
   border: 1px solid #ebebeb;
   border-radius: 20px;
   width: fit-content;
   padding: 5px 10px 5px 10px;
+  transition: border 0.3s;
+  &:focus-within {
+    border: 1px solid #3535353b;
+  }
   > img {
     width: 20px;
     height: 20px;
