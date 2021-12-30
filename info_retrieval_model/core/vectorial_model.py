@@ -10,6 +10,9 @@ class Doc:
         self.build_vector()
         self.calculate_tfi()
 
+    def __lt__(self, other):
+        return len(self.terms) < len(other.terms)
+
     def build_vector(self):
         self.vector = {}
         for term in self.terms:
@@ -28,6 +31,8 @@ class Doc:
     def calculate_wi(self, idf, is_query = False):
         self.wi = {}
         for term in self.tfi:
+            if(idf.__contains__(term) == False):
+                continue
             if(is_query):
                 self.wi[term] =  (A + ((1 - A) * self.tfi[term])) * idf[term]
             else:
