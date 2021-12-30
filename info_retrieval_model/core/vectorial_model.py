@@ -1,6 +1,7 @@
 from .text_utils import TextPreprocessingTools
 import functools
 import math
+A = 0.4
 
 class Doc:
     def __init__(self, text):
@@ -24,10 +25,13 @@ class Doc:
         for term in self.vector:
             self.tfi[term] = self.vector[term] / max_freq
 
-    def calculate_wi(self, idf):
+    def calculate_wi(self, idf, is_query = False):
         self.wi = {}
         for term in self.tfi:
-            self.wi[term] = self.tfi[term] * idf[term]
+            if(is_query):
+                self.wi[term] =  (A + ((1 - A) * self.tfi[term])) * idf[term]
+            else:
+                self.wi[term] = self.tfi[term] * idf[term]
 
     def calculate_norm(self):
         self.norm = math.sqrt(functools.reduce(lambda a, b: a + (b * b), self.wi.values(), 0))
@@ -72,4 +76,17 @@ class VectorialModel:
         if(doc_a.norm * doc_b.norm < 0.0000001):
             return 100000
         return sum_t / (doc_a.norm * doc_b.norm)
+
+    def query(self, text):
+        query_doc = Doc(text)
+        query_doc.calculate_wi(self.idf, True)
+        query_doc.calculate_norm()
+
+        ranking = []
+        for doc in self.docs:
+            rank = self.correlation(doc, query_doc)
+            ranking.append([rank, doc])
+
+        return sorted(ranking, reverse=True)
+
 
