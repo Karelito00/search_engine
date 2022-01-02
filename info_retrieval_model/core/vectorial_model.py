@@ -6,6 +6,7 @@ A = 0.4
 class Doc:
     def __init__(self, text):
         tpt = TextPreprocessingTools()
+        self.text = text
         self.terms = tpt.run_pipeline(text).split(" ")
         self.build_vector()
         self.calculate_tfi()
@@ -82,16 +83,21 @@ class VectorialModel:
             return 100000
         return sum_t / (doc_a.norm * doc_b.norm)
 
-    def query(self, text):
+    # The first n documents of the ranking are considered relevant
+    def query(self, text, n = 20):
         query_doc = Doc(text)
         query_doc.calculate_wi(self.idf, True)
         query_doc.calculate_norm()
 
         ranking = []
+        index = 0
         for doc in self.docs:
             rank = self.correlation(doc, query_doc)
-            ranking.append([rank, doc])
+            ranking.append([rank, doc, index])
+            index += 1
 
-        return sorted(ranking, reverse=True)
+        ranking = sorted(ranking, reverse=True)
+
+        return ranking[:min(n, len(ranking))]
 
 

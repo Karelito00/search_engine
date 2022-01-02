@@ -1,7 +1,7 @@
 from typing import Optional
 from fastapi import FastAPI
 from fastapi.middleware.cors import CORSMiddleware
-from core import VectorialModel
+from core import VectorialModel, initialize
 
 app = FastAPI()
 
@@ -18,25 +18,21 @@ app.add_middleware(
     allow_headers=["*"],
 )
 
-d1 = "leon leon leon"
-d2 = "leon leon leon zorro"
-d3 = "leon zorro nutria"
-d4 = "leon leon leon zorro zorro zorro"
-d5 = "nutria"
-
-vm = VectorialModel([d1, d2, d3, d4, d5])
+vm = initialize()
 
 def prepare_output(documents):
     body = []
     for doc in documents:
         body.append({
             "ranking": doc[0],
-            "text": " ".join(doc[1].terms)
+            "text": doc[1].text[:min(len(doc[1].text), 200)] + "(...)" if len(doc[1].text) > 200 else "",
+            "id": doc[2]
+
         })
     return body
 
 @app.get("/query")
-def read_item(value: str = ""):
+def query_docs(value: str = ""):
     documents = vm.query(value)
     return prepare_output(documents)
 
