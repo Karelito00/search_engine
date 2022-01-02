@@ -1,7 +1,7 @@
 <template>
   <div class="search-container">
     <div class="header">
-      <img :src="logo" @click="goToHome" style="cursor: pointer" />
+      <img :src="logo" @click="goToHome" style="cursor: pointer;" />
       <SearchInput ref="searchInput" from-search @submit="onSubmit" />
     </div>
     <div class="body">
@@ -10,7 +10,15 @@
           <div class="index">
             <p>{{ key + 1 }}</p>
           </div>
-          <p class="text-preview">{{ doc.text }}</p>
+          <div class="text-content">
+            <router-link
+              :to="{ name: 'document', params: { id: doc.id } }"
+              target="_blank"
+            >
+              Open document
+            </router-link>
+            <p class="text-preview">{{ doc.text }}</p>
+          </div>
         </div>
         <p class="ranking">{{ doc.ranking }}</p>
       </div>
@@ -38,26 +46,29 @@ export default {
   },
   methods: {
     goToHome() {
-      this.$router.push({ name: "home" })
+      this.$router.push({ name: "home" });
     },
     onSubmit(value) {
       if (value === "") return;
-      this.$router.push({name: "search", query: {value}})
+      this.$router.push({ name: "search", query: { value } });
       this.getDocuments(value);
     },
     async getDocuments(value) {
       try {
         const data = await fetch(`http://127.0.0.1:8000/query?value=${value}`);
         let body = JSON.parse(await data.text());
-        this.documents = body.map(doc => {
+        this.documents = body.map((doc) => {
           return {
             ...doc,
-            ranking: doc.ranking.toFixed(5)
-          }
+            ranking: doc.ranking.toFixed(5),
+          };
         });
       } catch (err) {
         console.log(err);
       }
+    },
+    openDocument(id) {
+      this.$router.push({ name: "document", params: { id } });
     },
   },
 };
@@ -107,8 +118,16 @@ export default {
             color: white;
           }
         }
-        .text-preview {
-          margin-left: 20px;
+        .text-content {
+          display: flex;
+          flex-direction: column;
+          align-items: flex-start;
+          padding-right: 50px;
+          padding-left: 40px;
+          .text-preview {
+            text-align: left;
+            margin-top: 10px;
+          }
         }
       }
     }

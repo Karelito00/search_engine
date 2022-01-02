@@ -25,7 +25,7 @@ def prepare_output(documents):
     for doc in documents:
         body.append({
             "ranking": doc[0],
-            "text": doc[1].text[:min(len(doc[1].text), 200)] + "(...)" if len(doc[1].text) > 200 else "",
+            "text": doc[1].text[:min(len(doc[1].text), 400)] + ("(...)" if len(doc[1].text) > 400 else ""),
             "id": doc[2]
 
         })
@@ -36,4 +36,7 @@ def query_docs(value: str = ""):
     documents = vm.query(value)
     return prepare_output(documents)
 
+@app.get("/document/{doc_id}")
+def read_document(doc_id: int):
+    return { "text": vm.docs[doc_id].text }
 

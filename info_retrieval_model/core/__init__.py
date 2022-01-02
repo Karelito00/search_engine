@@ -5,4 +5,4 @@ def initialize():
     ft = FileTools("/media/karelito00/Data/University/3er año/2do semestre/SRI/Proyecto Final/Search Engine/info_retrieval_model/core/collections")
 
     docs = ft.get_documents()
-    return  VectorialModel(map(lambda doc: ft.read_document(doc), docs))
+    return  VectorialModel(map(lambda doc: ft.read_document(doc).replace('\\n', '\n').replace('\\t', '\t'), docs))
