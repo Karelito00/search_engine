@@ -1,54 +1,18 @@
-from .text_utils import TextPreprocessingTools
 import functools
 import math
-A = 0.4
-
-class Doc:
-    def __init__(self, text):
-        tpt = TextPreprocessingTools()
-        self.text = text
-        self.terms = tpt.run_pipeline(text).split(" ")
-        self.build_vector()
-        self.calculate_tfi()
-
-    def __lt__(self, other):
-        return len(self.terms) < len(other.terms)
-
-    def build_vector(self):
-        self.vector = {}
-        for term in self.terms:
-            if(self.vector.__contains__(term) == False):
-                self.vector[term] = 1
-            else:
-                self.vector[term] += 1
-
-    def calculate_tfi(self):
-        self.tfi = {}
-        max_freq = max(self.vector.values())
-
-        for term in self.vector:
-            self.tfi[term] = self.vector[term] / max_freq
-
-    def calculate_wi(self, idf, is_query = False):
-        self.wi = {}
-        for term in self.tfi:
-            if(idf.__contains__(term) == False):
-                continue
-            if(is_query):
-                self.wi[term] =  (A + ((1 - A) * self.tfi[term])) * idf[term]
-            else:
-                self.wi[term] = self.tfi[term] * idf[term]
-
-    def calculate_norm(self):
-        self.norm = math.sqrt(functools.reduce(lambda a, b: a + (b * b), self.wi.values(), 0))
+from .feedback import Feedback
+from .vector import Vector
+from .doc import Doc
+EPS = 0.0000001
 
 class VectorialModel:
     def __init__(self, docs):
         self.term_universe = {}
         self.docs = []
+        self.feedback = Feedback()
         for doc in docs:
             doc = Doc(doc)
-            for term in doc.vector:
+            for term in doc.freq:
                 if(self.term_universe.__contains__(term) == False):
                     self.term_universe[term] = 1
                 else:
@@ -61,38 +25,44 @@ class VectorialModel:
     def calculate_weight_of_docs(self):
         for doc in self.docs:
             doc.calculate_wi(self.idf)
-            doc.calculate_norm()
 
     # idf = log( N / ni ) where:
     # N -> total documents
     # ni -> total documents where the term ti appears
     def calculate_idf(self):
-        self.idf = {}
+        idf = {}
         for term in self.term_universe:
-            self.idf[term] = math.log(len(self.docs) / self.term_universe[term], 10)
+            idf[term] = math.log(len(self.docs) / self.term_universe[term], 10)
+        self.idf = Vector(idf)
 
-    def correlation(self, doc_a, doc_b):
+    def correlation(self, vector_a, vector_b):
         sum_t = 0
-        max_vector = doc_a.wi if len(doc_a.wi) >= len(doc_b.wi) else doc_b.wi
-        min_vector = doc_a.wi if len(doc_a.wi) < len(doc_b.wi) else doc_b.wi
+        max_vector = vector_a if len(vector_a) >= len(vector_b) else vector_b
+        min_vector = vector_a if len(vector_a) < len(vector_b) else vector_b
         for term in min_vector:
             if(max_vector.__contains__(term)):
                 sum_t += min_vector[term] * max_vector[term]
 
-        if(doc_a.norm * doc_b.norm < 0.0000001):
+        if(sum_t < EPS):
+            return 0
+        if(vector_a.norm * vector_b.norm < EPS):
             return 100000
-        return sum_t / (doc_a.norm * doc_b.norm)
+        return sum_t / (vector_a.norm * vector_b.norm)
 
-    # The first n documents of the ranking are considered relevant
+    # The first n documents of the ranking are considered relevants
     def query(self, text, n = 20):
         query_doc = Doc(text)
-        query_doc.calculate_wi(self.idf, True)
-        query_doc.calculate_norm()
+        query_doc.calculate_wi(self.idf)
+        wi_query = self.get_feedback(query_doc)
+        if(wi_query is None):
+            wi_query = query_doc.wi
+
+        self.last_query = query_doc
 
         ranking = []
         index = 0
         for doc in self.docs:
-            rank = self.correlation(doc, query_doc)
+            rank = self.correlation(doc.wi, wi_query)
             ranking.append([rank, doc, index])
             index += 1
 
@@ -100,4 +70,28 @@ class VectorialModel:
 
         return ranking[:min(n, len(ranking))]
 
+    # qm = q + b * d_r - y * d_nr
+    # b = 0.75 / len(d_r)
+    # y = 0.15 / len(d_nr)
+    def get_feedback(self, query_doc):
+        query_feedback = self.feedback.get_feedback(query_doc)
+        if(query_feedback is None):
+            return None
+        relevants, no_relevants = query_feedback[0], query_feedback[1]
+        qm = query_doc.wi
 
+        sum_relev = functools.reduce(lambda a, b: a + self.docs[b].wi, relevants, Vector())
+        sum_no_relev = functools.reduce(lambda a, b: a + self.docs[b].wi, no_relevants, Vector())
+
+        b = 0 if len(relevants) == 0 else 0.75 / len(relevants)
+        y = 0 if len(no_relevants) == 0 else 0.15 / len(no_relevants)
+        qm = qm + (sum_relev * b) - (sum_no_relev * y)
+        qm.calculate_norm()
+        return qm
+
+    # feedback_type is equal to -1 if is a negative feedback, otherwise
+    # is equal to 1 and is a positive feedback
+    def set_feedback(self, feedback_type, doc_index, query = None):
+        if(query is None):
+            query = self.last_query
+        self.feedback.set_feedback(query, feedback_type, doc_index)

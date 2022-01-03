@@ -1,5 +1,6 @@
 from typing import Optional
-from fastapi import FastAPI
+from fastapi import FastAPI, Body
+from pydantic import BaseModel
 from fastapi.middleware.cors import CORSMiddleware
 from core import VectorialModel, initialize
 
@@ -40,3 +41,9 @@ def query_docs(value: str = ""):
 def read_document(doc_id: int):
     return { "text": vm.docs[doc_id].text }
 
+class Feedback(BaseModel):
+    feedback: int
+
+@app.put("/feedback/{doc_id}")
+def give_feedback(doc_id: int, feedback: Feedback):
+    vm.set_feedback(feedback.feedback, doc_id)

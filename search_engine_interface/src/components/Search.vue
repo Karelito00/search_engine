@@ -1,12 +1,12 @@
 <template>
   <div class="search-container">
     <div class="header">
-      <img :src="logo" @click="goToHome" style="cursor: pointer;" />
+      <img :src="logo" @click="goToHome" style="cursor: pointer" />
       <SearchInput ref="searchInput" from-search @submit="onSubmit" />
     </div>
     <div class="body">
       <div v-for="(doc, key) in documents" :key="key" class="document-retrieve">
-        <div>
+        <div class="content">
           <div class="index">
             <p>{{ key + 1 }}</p>
           </div>
@@ -20,7 +20,15 @@
             <p class="text-preview">{{ doc.text }}</p>
           </div>
         </div>
-        <p class="ranking">{{ doc.ranking }}</p>
+        <div class="doc-metrics">
+          <img :src="likeImg" class="like" @click="setFeedback(doc.id, 1)" />
+          <p class="ranking">{{ doc.ranking }}</p>
+          <img
+            :src="dislikeImg"
+            class="dislike"
+            @click="setFeedback(doc.id, -1)"
+          />
+        </div>
       </div>
     </div>
   </div>
@@ -36,6 +44,8 @@ export default {
   data() {
     return {
       logo: require("@/assets/logo.png"),
+      likeImg: require("@/assets/like.svg"),
+      dislikeImg: require("@/assets/dislike.svg"),
       documents: [],
     };
   },
@@ -63,6 +73,24 @@ export default {
             ranking: doc.ranking.toFixed(5),
           };
         });
+      } catch (err) {
+        console.log(err);
+      }
+    },
+    async setFeedback(docId, value) {
+      try {
+        let headers = new Headers()
+        headers.append("Content-type", "application/json")
+        let body = JSON.stringify({
+          feedback: value
+        });
+        const data = await fetch(`http://127.0.0.1:8000/feedback/${docId}`, {
+          method: "PUT",
+          body,
+          headers
+        });
+        let response = JSON.parse(await data.text());
+        console.log(response);
       } catch (err) {
         console.log(err);
       }
@@ -99,9 +127,10 @@ export default {
       justify-content: space-between;
       padding: 20px 40px 20px 40px;
       border-bottom: 1px solid #ebebeb;
-      > div {
+      .content {
         display: flex;
         align-items: center;
+        width: calc(100% - 160px);
         .index {
           background: #353535;
           width: fit-content;
@@ -127,6 +156,30 @@ export default {
           .text-preview {
             text-align: left;
             margin-top: 10px;
+          }
+        }
+      }
+      .doc-metrics {
+        display: flex;
+        align-items: center;
+        justify-content: space-between;
+        width: fit-content;
+        img {
+          width: 50px;
+          height: 50px;
+          cursor: pointer;
+        }
+        .like {
+          &:hover {
+            transition: transform, 0.2s;
+            transform: rotate(10deg);
+          }
+        }
+        .dislike {
+          transform: rotate(180deg);
+          &:hover {
+            transition: transform, 0.2s;
+            transform: rotate(170deg);
           }
         }
       }
