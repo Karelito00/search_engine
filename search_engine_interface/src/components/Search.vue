@@ -1,5 +1,8 @@
 <template>
   <div class="search-container">
+    <div v-if="loading" class="loader">
+      <img :src="searchLoad" />
+    </div>
     <div class="header">
       <img :src="logo" @click="goToHome" style="cursor: pointer" />
       <SearchInput ref="searchInput" from-search @submit="onSubmit" />
@@ -43,6 +46,8 @@ export default {
   },
   data() {
     return {
+      loading: false,
+      searchLoad: require("@/assets/search_load.svg"),
       logo: require("@/assets/logo.png"),
       likeImg: require("@/assets/like.svg"),
       dislikeImg: require("@/assets/dislike.svg"),
@@ -64,6 +69,7 @@ export default {
       this.getDocuments(value);
     },
     async getDocuments(value) {
+      this.loading = true
       try {
         const data = await fetch(`http://127.0.0.1:8000/query?value=${value}`);
         let body = JSON.parse(await data.text());
@@ -76,6 +82,7 @@ export default {
       } catch (err) {
         console.log(err);
       }
+      this.loading = false
     },
     async setFeedback(docId, value) {
       try {
@@ -106,6 +113,20 @@ export default {
 .search-container {
   p {
     margin: 0px;
+  }
+  .loader {
+    position: absolute;
+    width: 100vw;
+    height: 100vh;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    background: transparent;
+    background: #ffffff82;
+    img {
+      width: 60px;
+      height: 60px;
+    }
   }
   .header {
     padding: 25px 20px 20px 20px;
