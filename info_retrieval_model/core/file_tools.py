@@ -16,4 +16,4 @@ class FileTools:
 
     def read_document(self, path):
         f = open(path, "rb")
-        return str(f.read())
+        return str(f.read().decode("UTF-8", "ignore"))
