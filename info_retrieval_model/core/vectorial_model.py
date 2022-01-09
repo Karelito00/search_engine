@@ -73,6 +73,8 @@ class VectorialModel:
     # qm = q + b * d_r - y * d_nr
     # b = 0.75 / len(d_r)
     # y = 0.15 / len(d_nr)
+    # d_r -> documents relevants
+    # d_nr -> documents not relevants
     def get_feedback(self, query_doc):
         query_feedback = self.feedback.get_feedback(query_doc)
         if(query_feedback is None):
