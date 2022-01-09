@@ -1,8 +1,11 @@
 import functools
 import math
+import numpy as np
+from scipy import spatial
 from .feedback import Feedback
 from .vector import Vector
 from .doc import Doc
+from .word_embedding import WordEmbedding
 EPS = 0.0000001
 
 class VectorialModel:
@@ -10,6 +13,7 @@ class VectorialModel:
         self.term_universe = {}
         self.docs = []
         self.feedback = Feedback()
+        self.word_embedding = WordEmbedding("./core/word_embedding")
         for doc in docs:
             doc = Doc(doc)
             for term in doc.freq:
@@ -35,6 +39,12 @@ class VectorialModel:
             idf[term] = math.log(len(self.docs) / self.term_universe[term], 10)
         self.idf = Vector(idf)
 
+    def get_word_idf(self, word):
+        if(self.idf.__contains__(word) == False):
+            return 0
+        return self.idf[word]
+
+    # correlation calculated by cosine similarity
     def correlation(self, vector_a, vector_b):
         sum_t = 0
         max_vector = vector_a if len(vector_a) >= len(vector_b) else vector_b
@@ -52,6 +62,7 @@ class VectorialModel:
     # The first n documents of the ranking are considered relevants
     def query(self, text, n = 20):
         query_doc = Doc(text)
+        query_doc.add_terms(self.get_query_expansion(query_doc))
         query_doc.calculate_wi(self.idf)
         wi_query = self.get_feedback(query_doc)
         if(wi_query is None):
@@ -69,6 +80,28 @@ class VectorialModel:
         ranking = sorted(ranking, reverse=True)
 
         return ranking[:min(n, len(ranking))]
+
+    # IDF-AWE(q) = ( 1 / sum (IDF(wordi) ) ) * sum( IDF(wordi) * wordi_vector )
+    # wordi is the word embedding of qi term of the query
+    def get_idf_awe(self, wordi_array):
+        AWE_vector = np.zeros(self.word_embedding.vector_dimension, dtype=float)
+        sum_IDF = 0
+        embed_dict = self.word_embedding.embed_dict
+        for wordi in wordi_array:
+            sum_IDF +=  self.get_word_idf(wordi)
+            AWE_vector += embed_dict[wordi] * self.get_word_idf(wordi)
+
+        return AWE_vector * ( 1 / sum_IDF )
+
+    def get_query_expansion(self, query_doc):
+        wordi_array = set()
+        embed_dict = self.word_embedding.embed_dict
+        for term in query_doc.terms:
+            # word embeddings related with qi term
+            wordi_array = set.union(set(self.word_embedding.find_similar_word(embed_dict[term])), wordi_array)
+        idf_awe_vector = self.get_idf_awe(wordi_array)
+        wordi_ranking = list(map(lambda wordi: [np.exp(spatial.distance.cosine(embed_dict[wordi], idf_awe_vector)), wordi], wordi_array))
+        return list(map(lambda x: x[0], sorted(wordi_ranking, reverse=True)[:min(len(wordi_ranking), 10)]))
 
     # qm = q + b * d_r - y * d_nr
     # b = 0.75 / len(d_r)

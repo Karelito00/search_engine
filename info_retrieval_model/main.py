@@ -19,7 +19,7 @@ app.add_middleware(
     allow_headers=["*"],
 )
 
-vm = initialize()
+vm = initialize("./core")
 
 def prepare_output(documents):
     body = []

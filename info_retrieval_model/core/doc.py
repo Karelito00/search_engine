@@ -10,6 +10,11 @@ class Doc:
         self.build_freq()
         self.calculate_tfi()
 
+    def add_terms(self, new_terms):
+        self.terms.extend(new_terms)
+        self.build_freq()
+        self.calculate_tfi()
+
     def __lt__(self, other):
         return len(self.terms) < len(other.terms)
 

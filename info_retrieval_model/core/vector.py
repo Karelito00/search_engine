@@ -1,5 +1,6 @@
 import math
 import functools
+EPS = 0.0000001
 
 class Vector:
     def __init__(self, vector = {}, calc_norm = False):
@@ -37,6 +38,9 @@ class Vector:
 
         return Vector(new_vector)
 
+    def __truediv__(self, other):
+        assert(other > EPS, "Error, division by zero")
+        return self.__mul__(1 / other)
 
     def __sub__(self, other):
         if(type(other) is not Vector):
