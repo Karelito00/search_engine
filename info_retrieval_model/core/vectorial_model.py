@@ -98,7 +98,8 @@ class VectorialModel:
         embed_dict = self.word_embedding.embed_dict
         for term in query_doc.terms:
             # word embeddings related with qi term
-            wordi_array = set.union(set(self.word_embedding.find_similar_word(embed_dict[term])), wordi_array)
+            if(embed_dict.__contains__(term)):
+                wordi_array = set.union(set(self.word_embedding.find_similar_word_kdtree(embed_dict[term])), wordi_array)
         idf_awe_vector = self.get_idf_awe(wordi_array)
         wordi_ranking = list(map(lambda wordi: [np.exp(spatial.distance.cosine(embed_dict[wordi], idf_awe_vector)), wordi], wordi_array))
         return list(map(lambda x: x[0], sorted(wordi_ranking, reverse=True)[:min(len(wordi_ranking), 10)]))
