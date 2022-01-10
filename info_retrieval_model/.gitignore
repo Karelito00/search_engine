@@ -1,6 +1,7 @@
 testing.py
 collections/
 glove6B/
+elmo/
 
 __pycache__/
 *.py[cod]
