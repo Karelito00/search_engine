@@ -39,7 +39,6 @@ class Vector:
         return Vector(new_vector)
 
     def __truediv__(self, other):
-        assert(other > EPS, "Error, division by zero")
         return self.__mul__(1 / other)
 
     def __sub__(self, other):
