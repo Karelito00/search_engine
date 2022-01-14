@@ -21,6 +21,6 @@ class WordEmbedding:
         nearest = sorted(self.embed_dict.keys(), key=lambda word: spatial.distance.euclidean(self.embed_dict[word], embedes))
         return nearest[:5]
 
-    def find_similar_word_kdtree(self, embedes, count = 5):
+    def find_similar_word_kdtree(self, embedes, count = 1):
         _, nearests = self.kd_tree.query([embedes], k = count)
         return list(map(lambda index: self.keys[index], nearests[0]))
