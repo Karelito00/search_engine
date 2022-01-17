@@ -65,12 +65,13 @@ def initialize(root_path = "."):
 
 ## Preprocesamiento de texto
 Luego vamos a crear nuestro modelo vectorial, cada documento pasa primero por un filtro de preprocesamiento de texto, de manera tal que le aplicamos las siguientes operaciones:
+
 - Expandimos contracciones
 - Convertimos las palabras a minúscula
 - Removemos los signos de puntuación
 - Removemos las palabras que contengan dígitos
-- Removemos las stopwords
-- Aplicamos lematización
+- Removemos las stopwords(aquellas palabras que no proveen ninguna información útil para decidir en que categoría se debe clasificar el texto. Digase: preposiciones, conjunciones, etc)
+- Aplicamos lematización. Lematización es un proceso lingüístico que consiste en, dada una forma flexionada (es decir, en plural, en femenino, conjugada, etc), hallar el lema correspondiente. El lema es la forma que por convenio se acepta como representante de todas las formas flexionadas de una misma palabra. Es decir, el lema de una palabra es la palabra que nos encontraríamos como entrada en un diccionario tradicional: singular para sustantivos, masculino singular para adjetivos, infinitivo para verbos.
 
 Luego de esto digamos que tenemos un array de cadenas, donde cada cadena le llamaremos término.
 
@@ -98,7 +99,7 @@ def calculate_tfi(self):
     self.tfi = Vector(tfi)
 ```
 
-$maxfrec$ corresponde a la frecuencia del término que más se repite en el documento, esta frecuencia normalizada se realiza con el objetivo de que si un documento es igual que otro pero con los términos repetidos x veces no se le reste importancia al que menos frecuencia tiene, ya que los dos tendrían la misma importancia.
+La variable $maxfrec$ corresponde a la frecuencia del término que más se repite en el documento. Esta frecuencia normalizada se realiza con el objetivo de que si un documento es igual que otro pero con los mismos términos repetidos $x$ veces no se le reste importancia al que menos frecuencia tiene, ya que los dos tendrían la misma importancia.
 
 ``` python
 def __init__(self, docs):
@@ -120,7 +121,8 @@ def __init__(self, docs):
 ```
 
 Ya luego pasamos a calcular la frecuencia inversa de cada término del vocabulario y con ello podemos obtener los pesos de cada término por documento.
-$$ idf_i = log(\frac{N}{n_i}) $$
+
+$$idf_i = log(\frac{N}{n_i})$$
 $$ w_i = tf_i * idf_i$$
 
 Donde $N$ es la cantidad de documentos que tiene nuestro test collection y $n_i$ corresponde a la cantidad de documentos en los que aparece el $i$-ésimo término de nuestro vocabulario.
@@ -141,6 +143,7 @@ def query_docs(value: str = ""):
 Donde value sería el texto de nuestra query, entonces las queries las trataremos como si fueran documentos, que quiere decir esto, todas pasarán primero por un preprocesamiento de texto donde obtenemos un array con sus términos y entonces calculamos la frecuencia normalizada para cada término, así como sus pesos($w_i$)
 
 Como podemos ver en la clase **Doc** a la hora de calcular el peso de cada término($w_i$) hacemos una pequeña modificación a la fórmula, añadiendo un valor $A$ que permite amortiguar la contribución de la frecuencia de cada término, los valores más comunes son 0.4 y 0.5, nosotros utilizamos $A = 0.4$
+
 $$ w_i = (A + (1 - A) * tf_i) * idf_i $$
 
 Entonces ya que tenemos los pesos de la consulta, bastaría entonces con ranquear los documentos utilizando la fórmula de similitud del coseno:
@@ -169,7 +172,7 @@ Lo que hacemos en ese código es escoger el documento que tiene menor cantidad d
 
 Al final verificamos que la multiplicación de las normas sea mayor que cero para que no se nos indefina nuestra correlación
 
-Cuándo la norma de un documento puede ser cero? 
+¿Cuándo la norma de un documento puede ser cero?  
 Esto solo ocurre si cada término del documento aparece en todos los demás documentos de nuestro test collection, ya que $N$ sería igual a $n_i$
 
 Ahora que ya tenemos rankeados los documentos podemos devolverlos, pero antes vamos a ver que mejoras implementamos.
@@ -178,7 +181,7 @@ Ahora que ya tenemos rankeados los documentos podemos devolverlos, pero antes va
 
 En el frontend de nuestro proyecto añadimos la posibilidad de abrir cada documento, de forma tal que pueda revisarse el contenido de los documentos retornados y además la posibilidad de decir si es relevante o no. Por lo que tenemos la clase **Feedback**
 
-La cual contiene dos métodos: `get_feedback` y `set_feedback`, entonces por cada documento que nos den feedback haciendo uso de un trie podemos insertar una query y en el nodo final tendremos un set con los ínidices de los documentos relevantes y otro set con los ínidices de los no relevantes, si en algún momento decimos que el documento *d* era no relevante y ahora el usuario lo clasificó como relevante en esa query entonces lo eliminamos del set de no relevantes y lo añadimos en el de relevantes, y viceversa. El uso del trie es con el objetivo de evitar hacer hash a las query, hashes que luego puedan traer coliciones y ya que podemos tener muchísimas queries en feedback, este caso es posible.
+La cual contiene dos métodos: `get_feedback` y `set_feedback`, entonces por cada documento que nos den feedback haciendo uso de un trie(trie es una estructura de datos para guardar cadenas, con costo lineal en tiempo con respecto al tamaño de la cadena) podemos insertar una query y en el nodo final tendremos un set con los ínidices de los documentos relevantes y otro set con los ínidices de los no relevantes, si en algún momento decimos que el documento *d* era no relevante y ahora el usuario lo clasificó como relevante en esa query entonces lo eliminamos del set de no relevantes y lo añadimos en el de relevantes, y viceversa. El uso del trie es con el objetivo de evitar hacer hash a las query, hashes que luego puedan traer coliciones y ya que podemos tener muchísimas queries en feedback, este caso es posible.
 
 ``` python
 def set_feedback(self, query, feedback_type, doc_index):
@@ -237,6 +240,8 @@ $$ q_m = q + \beta * d_r - \gamma * d_{nr} $$
 
 Es decir tendremos nuevos pesos en los términos, sumamos los pesos de nuestra query base($q$) y luego por cada documento relevante sumamos el peso de cada término multiplicado por $\beta$, y por cada documento no relevante restamos el peso de cada término multiplicado por $\gamma$, los valores de $\beta$ y $\gamma$ que se utilizaron fueron $0.75$ y $0.15$ respectivamente.
 
+El algoritmo en resumen lo que hace es darle mayor importancia a los términos más usados en los documentos considerados relevantes para los usuarios, y por el contrario, los términos más usados en los documentos no relevantes se les da menor importancia.
+
 Con este nuevo vector de pesos en nuestra query podemos ranquear los documentos y retornarlos, pero antes veamos como añadimos expansión de consultas.
 
 ### Expansión de consulta:
@@ -265,9 +270,12 @@ def find_similar_word_kdtree(self, embedes, count = 2):
 Utilizamos el KDTree ya implementado en *sklearn*. Citando la documentación:  
 *"KD tree query time changes with D in a way that is difficult to precisely characterise. For small D (less than 20 or so) the cost is approximately O(D log N), and the KD tree query can be very efficient. For larger D, the cost increases to nearly O(D * N), and the overhead due to the tree structure can lead to queries which are slower than brute force."*
 
-Sin embargo en todos los casos que se probaron funcionó mucho más rápido que la fuerza bruta, en estre proyecto utilizamos vectores de 300 dimensiones.
+Traducción:
+El tiempo de consulta del KD-tree cambia con respecto a **D** de una manera que es difícil de caracterizar con precisión. Para **D** pequeños (menos de 20 aproximadamente) el costo es de aproximadamente **O(D log N)**, y la consulta del KD-tree puede ser muy eficiente. Para **D** más grande, el costo aumenta a casi **O(D * N)**, y la sobrecarga debido a la estructura de árbol puede generar consultas que son más lentas que la fuerza bruta.
 
-Bueno ya tenemos para cada término de nuestra query la word embedding más similar, para identificar los términos de la expansión creamos un vector basado en estos word embeddings, un enfoque llamado average word embeddings (AWE), el cual le da el mismo peso a cada término de la query:
+Sin embargo en todos los casos que se probaron funcionó mucho más rápido que la fuerza bruta, en este proyecto utilizamos vectores de 300 dimensiones.
+
+Ya tenemos para cada término de nuestra query la word embedding más similar, para identificar los términos de la expansión creamos un vector basado en estos word embeddings, un enfoque llamado average word embeddings (AWE), el cual le da el mismo peso a cada término de la query:
 
 $$AWE(q) = \frac{1}{n} \sum_{w_i \in q} \vec{w_i}$$
 
@@ -275,7 +283,7 @@ Donde $\vec{w_i}$ corresponde al word embedding del término $wi$ que pertenece 
 
 Kuzi et al, propone el uso de closest term, el cual se mide por similitud del coseno entre nuestro vector AWE y el word embedding candidato a término de expansión. Los autores definen la función de puntación de esta forma:
 
-$$ S(w, q) = exp^{cos(\vec{w}, AWE(q))} $$
+$$ S(w, q) = exp^{\displaystyle{cos(\vec{w}, AWE(q))}} $$
 
 Donde $\vec{w}$ sería el word embedding correspondiente al término $w$
 
@@ -335,7 +343,7 @@ Pruebas para la colección de npl
 ## Análisis crítico
 
 Entre las ventajas del modelo que implementamos, podemos decir que es bastante rápido a la hora de procesar un gran volumen de documentos, además de que se basa en las métricas TF-IDF para darle peso a los términos de los documentos.  
-Pero no todo es bueno, algo que tiene el model vectorial es que cuando haces una query para recuperar un documento tiene que tener al menos un término en común con el documento, de lo contrario la similitud por coseno será igual a cero, este problema le dimos solución usando las word embeddings, las cuales nos permiten encontrar términos similares que quizás no estaban en la query.  
+Pero no todo es bueno, algo que tiene el modelo vectorial es que cuando haces una query para recuperar un documento tiene que tener al menos un término en común con el documento, de lo contrario la similitud por coseno será igual a cero, este problema le dimos solución usando las word embeddings, las cuales nos permiten encontrar términos similares que quizás no estaban en la query.  
 Otra desventaja es que si queremos añadir documentos en tiempo de ejecución, tendremos que recalcular el modelo completamente, algo que nos costaría un poco de tiempo.  
 Es decir, este modelo está hecho para motores de búsquedas estáticos, o poco mutantes.
 
