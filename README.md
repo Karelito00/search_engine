@@ -1,6 +1,27 @@
-# Motor de búsqueda
+<p style="text-align: center;">
 
-## Info
+# Proyecto Final de Sistemas de Recuperación de Información
+ 
+Karel Díaz Vergara, Alben Luis Urquiza Rojas
+
+ <font size="50"> **Abstract.** The world is becoming more and more computerized. Over time, more people and more services will be found on the internet. Ways are needed to make interaction and communication between people and these services easy. And what better way to do this than Information Search and Retrieval (IRS). When a user needs something, he makes a query in an IRS, and it will be answered with a page or web resource where the solution to that query can be found. To develop our IRS, we use the vector model, supporting on user feedback and using word embedding technic to represent words through numbers. This field will continue to be an important part of Computer Science and to which many studies and efforts will be devoted in future. </font>
+
+</p>
+
+**Keywords:** Sistema Recuperación de la Información, SRI, modelo vectorial, word embedding
+
+# Introducción
+La Búsqueda y Recuperación de Información, llamada en inglés **Information Search and Retrieval (ISR)**, es la ciencia de la búsqueda de información en documentos electrónicos y cualquier tipo de colección documental digital, encargada de la búsqueda dentro de estos mismos, búsqueda de metadatos que describan documentos, o también la búsqueda en bases de datos relacionales, ya sea a través de internet, una intranet, y como objetivo realiza la recuperación en textos, imágenes, sonido o datos de otras características, de manera pertinente y relevante.
+
+La recuperación de información es un estudio interdisciplinario. Cubre tantas disciplinas que eso genera normalmente un conocimiento parcial desde tan solo una u otra perspectiva. Algunas de las disciplinas que se ocupan de estos estudios son la psicología cognitiva, la arquitectura de la información, diseño de la información, inteligencia artificial, lingüística, semiótica, informática, biblioteconomía, archivística y documentación.
+
+Un proceso de recuperación de información comienza cuando un usuario hace una consulta al sistema. Una consulta a su vez es una afirmación formal de la necesidad de una información. En la recuperación de información una consulta no identifica únicamente a un objeto dentro de la colección. De hecho varios objetos pueden ser respuesta a una consulta con diferentes grados de relevancia.
+
+Un objeto es una identidad que está representada por información en una base de datos. En dependencia de la aplicación estos objetos pueden ser archivos de texto, imágenes, audio, mapas, videos, etc. Muy a menudo los documentos no están almacenados en el sistema de recuperación de información, sino que están representados lógicamente.
+
+La mayoría de los sistemas de recuperación de información computan un ranking para saber cuán bien cada objeto responde a la consulta, ordenando los objetos de acuerdo a su valor de ranking. Los objetos con mayor ranking son mostrados a los usuarios y el proceso puede tener otras iteraciones si el usuario desea refinar su consulta.
+
+# Motor de Búsqueda
 El proyecto está dividido en dos aplicaciones, la interfaz gráfica (`./search_engine_interface`) desarrollada en VueJs, por la cual se realizan las consultas que se hacen a la segunda aplicación(`info_retrieval_model`) desarrollada con el framework fast api.
 
 ## Frontend / Interfaz Gráfica
@@ -24,7 +45,6 @@ $ cd search_engine_interface/
 $ yarn serve
 ```
 
-
 ## Backend / Modelo de recuperación de la información
 
 ### Requerimientos:
@@ -37,6 +57,7 @@ $ yarn serve
 - nltk
 
 ### Run:
+
 ``` bash
 $ cd info_retrieval_model/
 $ hypercorn main.py --reload
@@ -175,7 +196,7 @@ Al final verificamos que la multiplicación de las normas sea mayor que cero par
 ¿Cuándo la norma de un documento puede ser cero?  
 Esto solo ocurre si cada término del documento aparece en todos los demás documentos de nuestro test collection, ya que $N$ sería igual a $n_i$
 
-Ahora que ya tenemos rankeados los documentos podemos devolverlos, pero antes vamos a ver que mejoras implementamos.
+Ahora que ya tenemos rankeados los documentos podemos devolverlos al frontend(para que sean mostrados al usuario), pero antes vamos a ver que mejoras implementamos.
 
 ### Añadiendo feedback/retroalimentación:
 
@@ -281,7 +302,7 @@ $$AWE(q) = \frac{1}{n} \sum_{w_i \in q} \vec{w_i}$$
 
 Donde $\vec{w_i}$ corresponde al word embedding del término $wi$ que pertenece a la query, y $n$ es el número de términos diferentes que tiene la query $q$.
 
-Kuzi et al, propone el uso de closest term, el cual se mide por similitud del coseno entre nuestro vector AWE y el word embedding candidato a término de expansión. Los autores definen la función de puntación de esta forma:
+Kuzi et al(Saar Kuzi, "et al" es una expresión en latín que significa: y otros), propone el uso de closest term, el cual se mide por similitud del coseno entre nuestro vector AWE y el word embedding candidato a término de expansión. Los autores definen la función de puntación de esta forma:
 
 $$ S(w, q) = exp^{\displaystyle{cos(\vec{w}, AWE(q))}} $$
 
@@ -322,14 +343,15 @@ Entonces ya teniendo nuestro vector IDF-AWE y apoyándonos en la fórmula de sim
 
 ## Pruebas
 
-Para la colección de Lisa 
+Para probar el algoritmo de recuperación de la información implementado se usaron algunas colecciones de pruebas predefinidas(a las cuáles se hace referencia al principio del documento). A continuación se muestra una comparación entre el resultado obtenido por el algoritmo implementado y los documentos que segun la colección de prueba utilizada son los más relevantes.
+
+Para la colección de Lisa
 
 | Query number | Lisa response | Our information retrieval response |
 | -  | - | - |
 | #6 | 111 112 113 1100 1581 1582 2090 2616 2620 3647 4155 5066 5068 5626 5627 5628 5629 5631 | 5627 2090 2886 5830 2593 5626 3103 4155 2722 3185 566 987 113 5628 988 5038 10 5343 2616 2618 |
 | #7 | 277 278 279 1277 1278 1769 2279 3265 3267 3450 3789 5220 5748 5778 | 2279 345 1278 1359 1277 3343 2351 5189 5778 1931 5748 704 5779 1924 2753 5931 4813 4731 359 215
 | #8 | 40 49 199 524 697 701 1043 1044 1190 1191 1534 1677 2039 2545 3045 3716 4485 4486 4499 4717 5011 5170 5533 5534 5723 5816 | 4469 39 2806 40 5506 3045 4478 5722 1044 4479 1191 3716 5530 4497 49 3942 1038 3744 78 1522 |
-
 
 Pruebas para la colección de npl
 
