@@ -312,25 +312,31 @@ def get_query_expansion(self, query_doc):
 
 Entonces ya teniendo nuestro vector IDF-AWE y apoyándonos en la fórmula de similitud de arriba, nos quedamos con los 10 primeros word embeddings. Y los añadimos a nuestra query como términos de expansión y ahora si obtenemos feedback, calculamos los pesos nuevamente, y ranqueamos los documentos.
 
-## Pruebas
+## Pruebas y Métricas
 
-Para la colección de Lisa 
+Se hicieron pruebas con dos colecciones de datos done se utilizaron 4 medidas para evaluar el comportamiento de nuestro sistema de recuperación de la información, las medidas que se utilizaron fueron: 
+- Precisión: la relación entre los documentos recuperados que son relevantes y el total de documentos recuperados.
+- Recobrado: la relación entre los documentos relevantes recuperados y el total de documentos relevantes.
+- Medida F: hace ilusión a la relación entre la precisión y el recobrado.
+- Medida F1: muestra la relación entre la precisión y recobrado, es un caso particular de la Medida F, pero con $\beta = 1$.
 
-| Query number | Lisa response | Our information retrieval response |
-| -  | - | - |
-| #6 | 111 112 113 1100 1581 1582 2090 2616 2620 3647 4155 5066 5068 5626 5627 5628 5629 5631 | 5627 2090 2886 5830 2593 5626 3103 4155 2722 3185 566 987 113 5628 988 5038 10 5343 2616 2618 |
-| #7 | 277 278 279 1277 1278 1769 2279 3265 3267 3450 3789 5220 5748 5778 | 2279 345 1278 1359 1277 3343 2351 5189 5778 1931 5748 704 5779 1924 2753 5931 4813 4731 359 215
-| #8 | 40 49 199 524 697 701 1043 1044 1190 1191 1534 1677 2039 2545 3045 3716 4485 4486 4499 4717 5011 5170 5533 5534 5723 5816 | 4469 39 2806 40 5506 3045 4478 5722 1044 4479 1191 3716 5530 4497 49 3942 1038 3744 78 1522 |
+Para los dos conjuntos de pruebas que usamos, promediamos los valores de cada una de las métricas obtenidos en cada consulta, y además utilizamos $\beta = 0.5$ para la medida F, ya que le dimos mayor peso al recobrado de documentos.
 
+1- Lisa docs: contiene un total de 6004 documentos, y se corrieron las 33 pruebas de esta colección, se retornaba siempre una cantidad fija de documentos, en este caso 20:
 
-Pruebas para la colección de npl
+Precisión: $0.15303030$  
+Recobrado: $0.42850178$  
+Medida F: $0.16423873$  
+Medida F1: $0.19284608$  
 
-| Query number | npl response | Our information retrieval response |
-| -  | - | - |
-| #1 | 1239  1502  4462  4569  5472  5502  6471  6480  6664  6824 7923  8150  8172  8277  9219  9859  9988 10081 10588 | 5502 7230 9859 8276 3885 6276 2236 8298 4861 4463 4533 10394 1828 10652 1756 720 7831 58 6635 1502 |
-| #4 | 402  2546  4180  4419  5435  5437  5440  8099 10162 11178 | 5440 8534 10051 8643 4830 10162 7267 3035 5015 1835 4256 4306 4316 4594 4807 3956 2673 5263 5437 2936
-| #13 | 281  1337  1732  2085  2209  2458  2459  2463  3297  3398 3522  3641  3852  3984  4080  4454  4627  5045  5276  5368 5477  5743  5873  5980  6088  6273  6530  6534  6548  6549 6622  6909  6974  7073  7111  7176  7262  7374  7702  7709 7823  7908  8024  8136  8448  8563  8567  8960  9183  9423 9433  9434  9698 10192 10363 10487 10634 11037 11053 | 8346 5873 3631 10039 5250 8464 2312 4454 11053 2458 11312 3398 1167 9183 3401 1852 10755 1612 4079 |
+2- Npl docs: contiene un total de 11429 documentos, y se corrieron las 93 pruebas de esta colección, en este caso se filtraba para que los documentos retornados tuvieran una similitud mayor a 0.15, y como máximo se retornaban 40 documentos:
 
+Precisión: $0.15674785$  
+Recobrado: $0.28807682$  
+Medida F: $0.15973845$  
+Medida F1: $0.17276212$  
+
+Como se puede ver siempre el recobrado tiene mayor puntuaje que la precisión y esto es debido a que se le dió más fuerza a la hora de retornar los documentos, no obstante los resultados obtenidos son muy buenos
 
 ## Análisis crítico
 
