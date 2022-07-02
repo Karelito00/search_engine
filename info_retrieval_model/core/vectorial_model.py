@@ -87,22 +87,22 @@ class VectorialModel:
         AWE_vector = np.zeros(self.word_embedding.vector_dimension, dtype=float)
         sum_IDF = 0
         embed_dict = self.word_embedding.embed_dict
-        for wordi in wordi_array:
-            sum_IDF +=  self.get_word_idf(wordi)
-            AWE_vector += embed_dict[wordi] * self.get_word_idf(wordi)
+        for val in wordi_array:
+            sum_IDF +=  self.get_word_idf(val[1])
+            AWE_vector += embed_dict[val[0]] * self.get_word_idf(val[1])
 
         return AWE_vector * ( 1 / sum_IDF )
 
     def get_query_expansion(self, query_doc):
-        wordi_array = set()
+        wordi_array = []
         embed_dict = self.word_embedding.embed_dict
         for term in query_doc.terms:
             # word embeddings related with qi term
             if(embed_dict.__contains__(term)):
-                wordi_array = set.union(set(self.word_embedding.find_similar_word_kdtree(embed_dict[term])), wordi_array)
+                wordi_array = wordi_array + [[self.word_embedding.find_similar_word_kdtree(embed_dict[term])[0], term]]
         idf_awe_vector = self.get_idf_awe(wordi_array)
-        wordi_ranking = list(map(lambda wordi: [np.exp(spatial.distance.cosine(embed_dict[wordi], idf_awe_vector)), wordi], wordi_array))
-        return list(map(lambda x: x[0], sorted(wordi_ranking, reverse=True)[:min(len(wordi_ranking), 10)]))
+        wordi_ranking = list(map(lambda val: [np.exp(spatial.distance.cosine(embed_dict[val[0]], idf_awe_vector)), val[0]], wordi_array))
+        return list(map(lambda x: x[0], sorted(wordi_ranking, reverse=True)))
 
     # qm = q + b * d_r - y * d_nr
     # b = 0.75 / len(d_r)
