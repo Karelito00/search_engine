@@ -55,10 +55,8 @@ def initialize(root_path = "."):
     # Provide the collection path
     # news-group collection
     ft = FileTools(f"{root_path}/collections/news-group")
-
     # docs-lisa collection
     # ft = FileTools(f"{root_path}/collections/docs-lisa")
-
     docs = ft.get_documents()
     return  VectorialModel(map(lambda doc: ft.read_document(doc), docs))
 ```
@@ -89,11 +87,9 @@ def build_freq(self):
         else:
             freq[term] += 1
     self.freq = Vector(freq)
-
 def calculate_tfi(self):
     tfi = {}
     max_freq = max(self.freq.values())
-
     for term in self.freq:
         tfi[term] = self.freq.vector[term] / max_freq
     self.tfi = Vector(tfi)
@@ -115,7 +111,6 @@ def __init__(self, docs):
             else:
                 self.term_universe[term] += 1
         self.docs.append(doc)
-
     self.calculate_idf()
     self.calculate_weight_of_docs()
 ```
@@ -160,7 +155,6 @@ def correlation(self, vector_a, vector_b):
     for term in min_vector:
         if(max_vector.__contains__(term)):
             sum_t += min_vector[term] * max_vector[term]
-
     if(sum_t < EPS):
         return 0
     if(vector_a.norm * vector_b.norm < EPS):
@@ -190,7 +184,6 @@ def set_feedback(self, query, feedback_type, doc_index):
         if(node.mapp.__contains__(term) == False):
             node.mapp[term] = Node()
         node = node.mapp[term]
-
     if(feedback_type == 1):
         if(node.no_relevants.__contains__(doc_index)):
             node.no_relevants.remove(doc_index)
@@ -210,7 +203,6 @@ def get_feedback(self, query):
         if(node.mapp.__contains__(term) == False):
             return None
         node = node.mapp[term]
-
     return [node.relevants, node.no_relevants]
 ```
 
@@ -223,10 +215,8 @@ def get_feedback(self, query_doc):
         return None
     relevants, no_relevants = query_feedback[0], query_feedback[1]
     qm = query_doc.wi
-
     sum_relev = functools.reduce(lambda a, b: a + self.docs[b].wi, relevants, Vector())
     sum_no_relev = functools.reduce(lambda a, b: a + self.docs[b].wi, no_relevants, Vector())
-
     b = 0 if len(relevants) == 0 else 0.75 / len(relevants)
     y = 0 if len(no_relevants) == 0 else 0.15 / len(no_relevants)
     qm = qm + (sum_relev * b) - (sum_no_relev * y)
@@ -303,9 +293,7 @@ def get_idf_awe(self, wordi_array):
     for val in wordi_array:
         sum_IDF +=  self.get_word_idf(val[1])
         AWE_vector += embed_dict[val[0]] * self.get_word_idf(val[1])
-
     return AWE_vector * ( 1 / sum_IDF )
-
 def get_query_expansion(self, query_doc):
     wordi_array = []
     embed_dict = self.word_embedding.embed_dict
